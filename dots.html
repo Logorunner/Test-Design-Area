@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atelier North</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0b0c10; color: #f4f4f6; font-family: system-ui, sans-serif; min-height: 280vh; overflow-x: hidden; }
+  canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  main { position: relative; z-index: 2; }
+  section { min-height: 100vh; display: flex; align-items: center; padding: 4rem 8%; }
+  section:first-child { position: relative; }
+  .design-title { position: absolute; top: 3rem; left: 8%; z-index: 2; font-family: 'Geologica', sans-serif; font-size: clamp(4rem, 13vw, 11rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.07em; color: #f4f4f6; }
+  .card { max-width: 400px; background: rgba(155,215,255,0.16); border: 1px solid rgba(155,215,255,0.45); padding: 2rem; border-radius: 14px; }
+  .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #66fcf1; margin-bottom: 0.5rem; display: block; }
+  h1, h2 { font-size: 2rem; margin-bottom: 0.75rem; }
+  p { color: #dbe9f4; line-height: 1.5; }
+  .ch { display: inline-block; }
+  .right { justify-content: flex-end; }
+  #fix-btn {
+    position: fixed; top: 24px; right: 24px; z-index: 10;
+    background: rgba(11,12,16,0.9); color: #66fcf1; border: 1px solid #66fcf1;
+    padding: 0.65rem 1.4rem; border-radius: 99px; font-weight: 700; font-size: 0.8rem;
+    letter-spacing: 0.14em; cursor: pointer; opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease, background 0.2s ease;
+  }
+  #fix-btn.show { opacity: 1; pointer-events: auto; }
+  #fix-btn:hover { background: rgba(102,252,241,0.2); }
+</style>
+</head>
+<body>
+<button id="fix-btn">FIX</button>
+<canvas id="c"></canvas>
+<main>
+  <section><div class="design-title">DESIGN</div><div class="card"><span class="tag">Atelier North</span><h1>Pause to Trigger.</h1><p>Hold still to reveal the trigger ring, click to drop the dots, and scroll to shake the layout loose.</p></div></section>
+  <section class="right"><div class="card"><span class="tag">01 / Selected Work</span><h2>Tactile Interfaces.</h2><p>Once collapsed, sweep your cursor or scroll through the rubble to push the pieces around.</p></div></section>
+  <section><div class="card"><span class="tag">02 / Get in Touch</span><h2>Break the Rules.</h2><p>Hit the FIX button in the top right whenever you want to float everything back into place.</p></div></section>
+</main>
+<script>
+(function () {
+  var c = document.getElementById("c"), ctx = c.getContext("2d"), w = c.width = window.innerWidth, h = c.height = window.innerHeight;
+  var fixBtn = document.getElementById("fix-btn");
+  var COLS = 25, ROWS = 19, TOTAL = COLS * ROWS, R = 2.6, fallen = false, fixing = false, idle = 0, ring = 0, t = 0;
+  var PAL = [{r:255,g:59,b:48},{r:255,g:149,b:0},{r:255,g:214,b:10},{r:52,g:199,b:89},{r:102,g:252,b:241},{r:191,g:90,b:242}];
+  var mouse = { x: -999, y: -999, lx: -999, ly: -999, vx: 0, vy: 0, on: false }, lastY = window.pageYOffset || 0;
+  var cardEls = document.querySelectorAll(".card"), boxes = [], dots = [];
+
+  for (var i = 0; i < cardEls.length; i++) {
+    var el = cardEls[i], els = el.querySelectorAll(".tag, h1, h2, p"), chars = [];
+    for (var j = 0; j < els.length; j++) {
+      els[j].innerHTML = els[j].textContent.split(" ").map(function (wd) {
+        return '<span style="display:inline-block;white-space:nowrap">' + wd.split("").map(function (ch) { return '<span class="ch">' + ch + '</span>'; }).join("") + '</span>';
+      }).join(" ");
+    }
+    var spans = el.querySelectorAll(".ch"), cr = el.getBoundingClientRect();
+    for (var s = 0; s < spans.length; s++) {
+      var sr = spans[s].getBoundingClientRect();
+      chars.push({ el: spans[s], x: 0, y: 0, vx: 0, vy: 0, ox: sr.left - cr.left, oy: sr.top - cr.top, w: sr.width, h: sr.height, cw: cr.width, ch: cr.height, brk: false, grip: 110 + Math.random() * 140 });
+    }
+    boxes.push({ el: el, x: 0, y: 0, vx: 0, vy: 0, brk: false, grip: 240, chars: chars });
+  }
+
+  for (var k = 0; k < TOTAL; k++) {
+    var col = k % COLS, row = Math.floor(k / COLS);
+    dots.push({ x: ((col + 1) / (COLS + 1)) * w, y: ((row + 1) / (ROWS + 1)) * h, vx: 0, vy: 0, col: col, row: row, colr: PAL[k % 6], g: 0.9 + Math.random() * 0.35, b: 0.16 + Math.random() * 0.12, sw: 0.65 + Math.random() * 0.75, ph: Math.random() * 6.28 });
+  }
+
+  window.addEventListener("resize", function () { w = c.width = window.innerWidth; h = c.height = window.innerHeight; });
+  window.addEventListener("mousemove", function (e) { mouse.vx = e.clientX - mouse.x; mouse.vy = e.clientY - mouse.y; mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true; });
+  window.addEventListener("mouseleave", function () { mouse.on = false; idle = 0; });
+  window.addEventListener("click", function (e) {
+    if (e.target === fixBtn) return;
+    if (!fallen && !fixing && ring > 0.35) {
+      fallen = true; fixBtn.classList.add("show");
+      for (var i = 0; i < TOTAL; i++) { dots[i].vx = (Math.random() - 0.5) * 4.2; dots[i].vy = (Math.random() - 0.4) * 2.5; }
+    }
+  });
+
+  fixBtn.addEventListener("click", function () {
+    fixing = true; fallen = false; fixBtn.classList.remove("show");
+    for (var bi = 0; bi < boxes.length; bi++) {
+      boxes[bi].brk = false; boxes[bi].grip = 240; boxes[bi].vx = 0; boxes[bi].vy = 0;
+      for (var ci = 0; ci < boxes[bi].chars.length; ci++) {
+        boxes[bi].chars[ci].brk = false; boxes[bi].chars[ci].grip = 110 + Math.random() * 140;
+      }
+    }
+  });
+  function loop() {
+    ctx.fillStyle = "#0b0c10"; ctx.fillRect(0, 0, w, h); t += 0.05;
+    var md = Math.hypot(mouse.x - mouse.lx, mouse.y - mouse.ly); mouse.lx = mouse.x; mouse.ly = mouse.y;
+    idle = (!fallen && !fixing && mouse.on && md < 2.2) ? idle + 1 : 0;
+    ring += (((!fallen && !fixing && idle > 18) ? 1 : 0) - ring) * 0.12;
+    document.body.style.cursor = (!fallen && !fixing && ring > 0.35) ? "pointer" : "default";
+
+    var sy = window.pageYOffset || document.documentElement.scrollTop || 0, sv = Math.abs(sy - lastY); lastY = sy;
+    var active = [];
+
+    for (var bi = 0; bi < boxes.length; bi++) {
+      var bx = boxes[bi], rect = bx.el.getBoundingClientRect(), inView = rect.bottom > -80 && rect.top < h + 80;
+      if (fixing) {
+        bx.x += (0 - bx.x) * 0.09; bx.y += (0 - bx.y) * 0.09;
+      } else if (!bx.brk) {
+        if (sv > 1) { bx.vy -= Math.min(sv * 0.04, 1.8); bx.vx += Math.sin(t + bi) * Math.min(sv * 0.025, 1.1); }
+        if (inView && sv > 2.5) bx.grip -= sv * 0.14;
+        if (bx.grip <= 0) { bx.brk = true; bx.vx = (Math.random() - 0.5) * 3; bx.vy = 1.5; fixBtn.classList.add("show"); }
+        bx.vx = (bx.vx - bx.x * 0.11) * 0.76; bx.vy = (bx.vy - bx.y * 0.11) * 0.76;
+        bx.x += bx.vx; bx.y += bx.vy;
+      } else {
+        if (sv > 1) { bx.vy -= Math.min(sv * 0.035, 1.6); bx.vx += (Math.random() - 0.5) * 0.9; }
+        if (mouse.on && rect.left < mouse.x + 40 && rect.right > mouse.x - 40 && rect.top < mouse.y + 40 && rect.bottom > mouse.y - 40) {
+          bx.vx += mouse.vx * 0.18; bx.vy += mouse.vy * 0.18;
+        }
+        bx.vy += 0.65; bx.vx *= 0.95; bx.x += bx.vx; bx.y += bx.vy;
+        var flr = h - (rect.bottom - bx.y) - 8;
+        if (bx.y > flr) { bx.y = flr; bx.vy *= -0.15; bx.vx *= 0.8; if (Math.abs(bx.vy) < 0.8) bx.vy = 0; }
+      }
+      bx.el.style.transform = "translate3d(" + bx.x.toFixed(1) + "px," + bx.y.toFixed(1) + "px,0)";
+      rect = bx.el.getBoundingClientRect();
+      if (rect.bottom > -50 && rect.top < h + 50) {
+        active.push({ rect: rect, box: bx });
+        for (var ci = 0; ci < bx.chars.length; ci++) {
+          var ch = bx.chars[ci];
+          if (fixing) {
+            ch.x += (0 - ch.x) * 0.1; ch.y += (0 - ch.y) * 0.1;
+          } else if (!ch.brk) {
+            if (sv > 2) ch.grip -= sv * 0.1;
+            if (bx.brk) ch.grip -= 6;
+            if (ch.grip <= 0) { ch.brk = true; ch.vx = (Math.random() - 0.5) * 3; ch.vy = -0.8 - Math.random() * 1.5; fixBtn.classList.add("show"); }
+          } else {
+            if (sv > 2) { ch.vy -= Math.min(sv * 0.03, 1.4); ch.vx += (Math.random() - 0.5) * 1.0; }
+            if (mouse.on && Math.hypot((rect.left + ch.ox + ch.x) - mouse.x, (rect.top + ch.oy + ch.y) - mouse.y) < 55) {
+              ch.vx += mouse.vx * 0.25; ch.vy += mouse.vy * 0.25 - 0.6;
+            }
+            ch.vy += 0.55; ch.vx *= 0.95; ch.x += ch.vx; ch.y += ch.vy;
+            var x0 = -ch.ox + 12, x1 = ch.cw - ch.ox - ch.w - 12, y0 = -ch.oy + 12, y1 = ch.ch - ch.oy - ch.h - 10;
+            if (ch.y > y1) { ch.y = y1; ch.vy *= -0.2; ch.vx *= 0.78; }
+            if (ch.y < y0) { ch.y = y0; ch.vy *= -0.2; }
+            if (ch.x < x0) { ch.x = x0; ch.vx *= -0.25; }
+            if (ch.x > x1) { ch.x = x1; ch.vx *= -0.25; }
+          }
+          ch.el.style.transform = "translate3d(" + ch.x.toFixed(1) + "px," + ch.y.toFixed(1) + "px,0)";
+        }
+      }
+    }
+
+    var allRestored = true;
+    for (var i = 0; i < TOTAL; i++) {
+      var d = dots[i], gx = ((d.col + 1) / (COLS + 1)) * w, gy = ((d.row + 1) / (ROWS + 1)) * h;
+      if (fixing) {
+        d.x += (gx - d.x) * 0.08; d.y += (gy - d.y) * 0.08;
+        if (Math.hypot(gx - d.x, gy - d.y) > 1.5) allRestored = false;
+        continue;
+      }
+      if (!fallen) { d.x = gx; d.y = gy; continue; }
+      if (sv > 1) { var bst = Math.min(sv * 0.042, 2.1) * d.sw; d.vy -= bst; d.vx += Math.cos(t + d.ph + d.y * 0.01) * bst * 0.7; }
+      if (mouse.on && Math.hypot(d.x - mouse.x, d.y - mouse.y) < 65) { d.vx += mouse.vx * 0.22; d.vy += mouse.vy * 0.22 - 0.5; }
+      d.vy += 0.58 * d.g; d.vx *= 0.978; d.vy *= 0.99; d.x += d.vx; d.y += d.vy;
+      if (d.y + R > h) { d.y = h - R; d.vy *= -d.b; d.vx *= 0.82; if (Math.abs(d.vy) < 0.85) d.vy = 0; }
+      if (d.y - R < 0) { d.y = R; d.vy *= -0.25; }
+      if (d.x - R < 0) { d.x = R; d.vx *= -d.b; } else if (d.x + R > w) { d.x = w - R; d.vx *= -d.b; }
+      for (var bIdx = 0; bIdx < active.length; bIdx++) {
+        var bx2 = active[bIdx].rect, bd = active[bIdx].box;
+        if (d.x + R > bx2.left && d.x - R < bx2.right && d.y + R > bx2.top && d.y - R < bx2.bottom) {
+          var pL = (d.x + R) - bx2.left, pR = bx2.right - (d.x - R), pT = (d.y + R) - bx2.top, pB = bx2.bottom - (d.y - R), mp = Math.min(pL, pR, pT, pB);
+          if (!bd.brk) { bd.vy += d.vy * 0.006; bd.vx += d.vx * 0.006; }
+          if (mp === pT) { d.y = bx2.top - R; d.vy *= -d.b; d.vx *= 0.84; if (Math.abs(d.vy) < 0.85) d.vy = 0; }
+          else if (mp === pB) { d.y = bx2.bottom + R; d.vy = Math.abs(d.vy) * 0.3; }
+          else if (mp === pL) { d.x = bx2.left - R; d.vx = -Math.abs(d.vx) * d.b - 0.3; }
+          else { d.x = bx2.right + R; d.vx = Math.abs(d.vx) * d.b + 0.3; }
+        }
+      }
+    }
+    if (fixing && allRestored) fixing = false;
+
+    if (fallen) {
+      for (var p = 0; p < 2; p++) {
+        for (var a = 0; a < TOTAL; a++) {
+          for (var b = a + 1; b < TOTAL; b++) {
+            var d1 = dots[a], d2 = dots[b], dx = d2.x - d1.x, dy = d2.y - d1.y, minD = R * 2 + 0.8, dsq = dx * dx + dy * dy;
+            if (dsq > 0 && dsq < minD * minD) {
+              var dist = Math.sqrt(dsq), ov = (minD - dist) * 0.5, nx = dx / dist, ny = dy / dist;
+              d1.x -= nx * ov; d1.y -= ny * ov; d2.x += nx * ov; d2.y += ny * ov;
+              var vn = (d2.vx - d1.vx) * nx + (d2.vy - d1.vy) * ny;
+              if (vn < 0) { var imp = -0.55 * vn; d1.vx -= imp * nx; d1.vy -= imp * ny; d2.vx += imp * nx; d2.vy += imp * ny; }
+            }
+          }
+        }
+      }
+    }
+
+    var infR = Math.min(w, h) * 0.22;
+    for (var m = 0; m < TOTAL; m++) {
+      var dot = dots[m], r = dot.colr.r, g = dot.colr.g, b = dot.colr.b, al = 0.95;
+      if (!fallen && !fixing) {
+        var dm = mouse.on ? Math.hypot(dot.x - mouse.x, dot.y - mouse.y) : 9999, inf = dm < infR ? Math.pow(1 - dm / infR, 1.5) : 0;
+        r = Math.round(130 + (102 - 130) * inf); g = Math.round(138 + (252 - 138) * inf); b = Math.round(150 + (241 - 150) * inf); al = 0.32 + 0.66 * inf;
+      }
+      ctx.beginPath(); ctx.arc(dot.x, dot.y, R, 0, Math.PI * 2); ctx.fillStyle = "rgba(" + r + "," + g + "," + b + "," + al + ")"; ctx.fill();
+    }
+
+    if (ring > 0.02) {
+      ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 26 + Math.sin(t) * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(102,252,241," + (ring * 0.14) + ")"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(102,252,241," + (ring * 0.9) + ")"; ctx.stroke();
+      ctx.fillStyle = "rgba(102,252,241," + ring + ")"; ctx.font = "700 10px system-ui,sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("DROP", mouse.x, mouse.y);
+    }
+    mouse.vx *= 0.5; mouse.vy *= 0.5;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
