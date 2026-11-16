@@ -1,113 +1,125 @@
 ---
 import Base from "../layouts/Base.astro";
 
-const cells = Array.from({ length: 12 * 8 }, (_, i) => i);
+const projects = [
+  {
+    title: "WEB",
+    tag: "01 / Web",
+    description: "Digital experiences, interfaces, and the details that make them feel alive.",
+  },
+  {
+    title: "PLAY",
+    tag: "02 / Play",
+    description: "Experiments with interaction, motion, and unexpected ways to explore.",
+  },
+];
 ---
 
-<Base title="Grid Test">
-  <main class="page-shell">
-    <div class="panel">
-      <div class="grid-wrap" aria-label="Plus and dot grid">
-        {cells.map((cell) => {
-          const col = cell % 12;
-          const row = Math.floor(cell / 12);
-          const isDot = (col + row) % 4 === 0 || (col * row) % 5 === 0;
-
-          return (
-            <span
-              class:list={["node", isDot && "dot"]}
-              style={`--x:${col}; --y:${row};`}
-              aria-hidden="true"
-            />
-          );
-        })}
-      </div>
-    </div>
+<Base title="Web & Play">
+  <main class="work-page">
+    {projects.map((project, index) => (
+      <section class:list={["work-section", index === 1 && "work-section--reverse"]}>
+        <h1 class="work-title">{project.title}</h1>
+        <article class="text-box">
+          <span class="tag">{project.tag}</span>
+          <p>{project.description}</p>
+        </article>
+      </section>
+    ))}
   </main>
 </Base>
 
 <style>
-  .page-shell {
+  :global(body) {
     min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 40px 20px;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: #0b0c10;
+    background-image: radial-gradient(circle, rgba(180, 205, 220, 0.58) 1.4px, transparent 1.7px);
+    background-size: 34px 34px;
   }
 
-  .panel {
+  .work-page {
     position: relative;
-    width: min(92vw, 980px);
-    height: min(72vh, 620px);
-    border-radius: 28px;
-    background:
-      radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 48%),
-      linear-gradient(135deg, #10141a 0%, #0d1116 30%, #121821 100%);
-    border: 1px solid rgba(255,255,255,0.08);
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    z-index: 1;
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 4rem clamp(24px, 8vw, 112px);
   }
 
-  .panel::before {
-    content: "";
-    position: absolute;
-    inset: 24px;
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.08);
-    pointer-events: none;
+  .work-section {
+    position: relative;
+    display: flex;
+    min-height: 72vh;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(2rem, 8vw, 8rem);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  .grid-wrap {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
+  .work-section--reverse {
+    flex-direction: row-reverse;
   }
 
-  .node {
-    position: absolute;
-    left: calc(var(--x) * 40px + 44px);
-    top: calc(var(--y) * 40px + 44px);
-    width: 18px;
-    height: 18px;
+  .work-title {
+    flex: 1;
+    margin: 0;
+    color: #f4f4f6;
+    font-family: "Geologica", system-ui, sans-serif;
+    font-size: clamp(5rem, 17vw, 13rem);
+    font-weight: 900;
+    letter-spacing: -0.075em;
+    line-height: 0.82;
+    text-shadow: none;
+  }
+
+  .text-box {
+    flex: 0 1 340px;
+    padding: 1.75rem;
+    border: 1px solid rgba(155, 215, 255, 0.45);
+    border-radius: 14px;
+    background: rgba(15, 20, 27, 0.88);
+    backdrop-filter: blur(8px);
+  }
+
+  .tag {
     display: block;
-    opacity: 0.8;
+    margin-bottom: 0.75rem;
+    color: #66fcf1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
   }
 
-  .node::before,
-  .node::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(160, 218, 255, 0.88);
+  .text-box p {
+    margin: 0;
+    color: #dbe9f4;
+    line-height: 1.6;
   }
 
-  .node::before {
-    width: 2px;
-    height: 18px;
-    border-radius: 99px;
-  }
+  @media (max-width: 700px) {
+    .work-page {
+      padding-top: 1rem;
+    }
 
-  .node::after {
-    width: 18px;
-    height: 2px;
-    border-radius: 99px;
-  }
+    .work-section,
+    .work-section--reverse {
+      min-height: 78vh;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2rem;
+    }
 
-  .node.dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 12px rgba(255,255,255,0.7);
-  }
+    .work-title {
+      font-size: clamp(5rem, 23vw, 9rem);
+    }
 
-  .node.dot::before,
-  .node.dot::after {
-    display: none;
+    .text-box {
+      flex-basis: auto;
+      width: min(100%, 380px);
+      align-self: flex-end;
+    }
   }
 </style>
-</Base>
