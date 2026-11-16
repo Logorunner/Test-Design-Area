@@ -3,9 +3,13 @@ import Base from "../layouts/Base.astro";
 
 // Add a line here when you add a test. Pages in src/pages are Astro;
 // anything self-contained can live in public/ and be linked straight.
+// Links have to carry the base path, or they break on GitHub Pages where
+// the site lives at /Test-Design-Area rather than at the root.
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 const tests = [
   {
-    href: "/dots.html",
+    href: `${base}/dots.html`,
     title: "Dots",
     note: "Pointer-reactive dot field, click to collapse. Plain HTML in public/, untouched by the build.",
   },

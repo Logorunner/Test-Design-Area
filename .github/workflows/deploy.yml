@@ -1,0 +1,36 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # so it can be re-run by hand from the Actions tab
+
+# Pages needs these: id-token is what lets the deploy step prove who it is.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and don't cancel one that's part-way through.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Astro's own action: installs, runs the build, and uploads dist/ as the
+      # Pages artifact. Doing those by hand is three more steps to get wrong.
+      - uses: withastro/action@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
