@@ -14,7 +14,8 @@
   main { position: relative; z-index: 2; }
   section { min-height: 100vh; display: flex; align-items: center; padding: 4rem 8%; }
   section:first-child { position: relative; }
-  .design-title { position: absolute; top: 3rem; left: 8%; z-index: 2; font-family: 'Geologica', sans-serif; font-size: clamp(4rem, 13vw, 11rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.07em; color: #4da3ff; }
+  .design-title { position: absolute; top: 3rem; left: 8%; z-index: 2; font-family: 'Geologica', sans-serif; font-size: clamp(4rem, 13vw, 11rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.07em; color: #4da3ff; transition: color 250ms ease, text-shadow 250ms ease; }
+  .design-title:hover, .design-title:focus-visible { color: #8bc5ff; text-shadow: 0 0 12px rgba(77, 163, 255, 0.9), 0 0 32px rgba(77, 163, 255, 0.7), 0 0 64px rgba(77, 163, 255, 0.45); }
   .card { max-width: 400px; background: rgba(155,215,255,0.16); border: 1px solid rgba(155,215,255,0.45); padding: 2rem; border-radius: 14px; }
   .tag { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #66fcf1; margin-bottom: 0.5rem; display: block; }
   h1, h2 { font-size: 2rem; margin-bottom: 0.75rem; }
