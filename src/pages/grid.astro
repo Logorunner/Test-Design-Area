@@ -12,13 +12,18 @@ const projects = [
     tag: "02 / Play",
     description: "Experiments with interaction, motion, and unexpected ways to explore.",
   },
+  {
+    title: "DESIGN",
+    tag: "03 / Design",
+    description: "A visual language built from structure, tone, rhythm, and atmosphere.",
+  },
 ];
 ---
 
 <Base title="Web & Play">
   <main class="work-page">
-    {projects.map((project, index) => (
-      <section class:list={["work-section", index === 1 && "work-section--reverse"]}>
+    {projects.map((project) => (
+      <section class="work-section">
         <h1 class="work-title">{project.title}</h1>
         <article class="text-box">
           <span class="tag">{project.tag}</span>
@@ -40,55 +45,49 @@ const projects = [
   }
 
   .work-page {
-    position: relative;
-    z-index: 1;
-    width: min(1120px, 100%);
+    width: min(1100px, calc(100% - 44px));
     margin: 0 auto;
-    padding: 4rem clamp(24px, 8vw, 112px);
+    padding: 2rem 0 5rem;
   }
 
   .work-section {
-    position: relative;
     display: flex;
-    min-height: 72vh;
-    align-items: center;
-    justify-content: space-between;
-    gap: clamp(2rem, 8vw, 8rem);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  }
-
-  .work-section--reverse {
-    flex-direction: row-reverse;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    min-height: 32vh;
+    padding: 1.2rem 0 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .work-title {
-    flex: 1;
     margin: 0;
     color: #f4f4f6;
     font-family: "Geologica", system-ui, sans-serif;
-    font-size: clamp(5rem, 17vw, 13rem);
+    font-size: clamp(4.2rem, 12vw, 12rem);
     font-weight: 900;
+    line-height: 0.8;
     letter-spacing: -0.075em;
-    line-height: 0.82;
+    text-transform: uppercase;
     text-shadow: none;
   }
 
   .text-box {
-    flex: 0 1 340px;
-    padding: 1.75rem;
+    align-self: flex-end;
+    width: min(100%, 320px);
+    padding: 1.2rem 1.1rem;
     border: 1px solid rgba(155, 215, 255, 0.45);
     border-radius: 14px;
-    background: rgba(15, 20, 27, 0.88);
-    backdrop-filter: blur(8px);
+    background: rgba(15, 20, 27, 0.9);
   }
 
   .tag {
     display: block;
     margin-bottom: 0.75rem;
     color: #66fcf1;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
@@ -100,26 +99,13 @@ const projects = [
 
   @media (max-width: 700px) {
     .work-page {
+      width: min(100% - 28px, 100%);
       padding-top: 1rem;
     }
 
-    .work-section,
-    .work-section--reverse {
-      min-height: 78vh;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 2rem;
-    }
-
-    .work-title {
-      font-size: clamp(5rem, 23vw, 9rem);
-    }
-
     .text-box {
-      flex-basis: auto;
-      width: min(100%, 380px);
-      align-self: flex-end;
+      width: 100%;
+      align-self: stretch;
     }
   }
 </style>
