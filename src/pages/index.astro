@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+
+// Add a line here when you add a test. Pages in src/pages are Astro;
+// anything self-contained can live in public/ and be linked straight.
+const tests = [
+  {
+    href: "/dots.html",
+    title: "Dots",
+    note: "Pointer-reactive dot field, click to collapse. Plain HTML in public/, untouched by the build.",
+  },
+];
+---
+<Base title="Test Design Area">
+  <h1>Test Design Area</h1>
+  <p class="lede">A place to play. Astro, static, nothing on the server.</p>
+  <ul class="tests">
+    {tests.map((t) => (
+      <li>
+        <a href={t.href}>{t.title}</a>
+        <p>{t.note}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
